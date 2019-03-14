@@ -11,7 +11,7 @@ use futures::channel::{mpsc, oneshot};
 /// your own main loop.
 pub trait IoHandler {
     fn new(watches: &[dbus::Watch]) -> Result<Self, Error> where Self: Sized;
-    fn after_read_write(&mut self, lw: &task::LocalWaker);
+    fn after_read_write(&mut self, lw: &task::Waker);
 }
 
 /// This is the reactor specific part of the Connection.
@@ -54,7 +54,7 @@ impl Connection {
 
     pub fn handle(&self) -> ConnHandle { ConnHandle(self.txrx.clone(), self.command_sender.clone()) }
 
-    fn check_cmd(&mut self, lw: &task::LocalWaker) -> bool {
+    fn check_cmd(&mut self, lw: &task::Waker) -> bool {
         use futures::Stream;
         let cmd = {
             let p = Pin::new(&mut self.command_receiver);
@@ -80,7 +80,7 @@ impl Connection {
 
 impl futures::Future for Connection {
     type Output = ();
-    fn poll(mut self: Pin<&mut Self>, lw: &task::LocalWaker) -> task::Poll<()> {
+    fn poll(mut self: Pin<&mut Self>, lw: &task::Waker) -> task::Poll<()> {
         let mut has_rw = false;
         loop {
             if self.quit { return task::Poll::Ready(()) };

@@ -26,7 +26,7 @@ pub struct ReplyMessage(Result<oneshot::Receiver<dbus::Message>, Option<Error>>)
 impl futures::TryFuture for ReplyMessage {
     type Ok = dbus::Message;
     type Error = Error;
-    fn try_poll(mut self: Pin<&mut Self>, lw: &task::LocalWaker) -> task::Poll<Result<Self::Ok, Self::Error>> {
+    fn try_poll(mut self: Pin<&mut Self>, lw: &task::Waker) -> task::Poll<Result<Self::Ok, Self::Error>> {
         match &mut self.0 {
             Err(e) => task::Poll::Ready(Err(e.take().unwrap())),
             Ok(ref mut recv) => {
@@ -57,7 +57,7 @@ pub struct MethodReply<T> {
 impl<T> futures::TryFuture for MethodReply<T> {
     type Ok = T;
     type Error = Error;
-    fn try_poll(mut self: Pin<&mut Self>, lw: &task::LocalWaker) -> task::Poll<Result<Self::Ok, Self::Error>> {
+    fn try_poll(mut self: Pin<&mut Self>, lw: &task::Waker) -> task::Poll<Result<Self::Ok, Self::Error>> {
         let p = Pin::new(&mut self.f);
         p.try_poll(lw)
     }
@@ -76,7 +76,7 @@ pub struct MessageStream(Result<mpsc::UnboundedReceiver<dbus::Message>, Option<E
 impl futures::TryStream for MessageStream {
     type Ok = dbus::Message;
     type Error = Error;
-    fn try_poll_next(mut self: Pin<&mut Self>, lw: &task::LocalWaker) -> task::Poll<Option<Result<Self::Ok, Self::Error>>> {
+    fn try_poll_next(mut self: Pin<&mut Self>, lw: &task::Waker) -> task::Poll<Option<Result<Self::Ok, Self::Error>>> {
         match &mut self.0 {
             Err(e) => { let e = e.take(); task::Poll::Ready(e.map(|e| Err(e))) },
             Ok(ref mut recv) => {
@@ -97,7 +97,7 @@ pub struct SignalStream<T> {
 impl<T> futures::TryStream for SignalStream<T> {
     type Ok = T;
     type Error = Error;
-    fn try_poll_next(mut self: Pin<&mut Self>, lw: &task::LocalWaker) -> task::Poll<Option<Result<Self::Ok, Self::Error>>> {
+    fn try_poll_next(mut self: Pin<&mut Self>, lw: &task::Waker) -> task::Poll<Option<Result<Self::Ok, Self::Error>>> {
         let p = Pin::new(&mut *self.f);
         p.try_poll_next(lw)
     }
