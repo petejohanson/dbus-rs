@@ -262,4 +262,5 @@ pub mod tokio;
 mod connection;
 
 pub use connection::Connection;
+pub use connection::IoHandler;
 
